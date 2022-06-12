@@ -34,13 +34,12 @@ class JobsParser:
                     else:
                         self.benefits[row['id']].append(self.get_benefits(row))
 
-    # TODO
     def read_salaries_from_csv(self):
         file = 'glassdoor/glassdoor_salary_salaries.csv'
         with open(file, 'r', encoding = 'cp850') as csv_file:
             reader = csv.DictReader(csv_file)
             for row in reader:
-                if row['salaries.comments.val.rating'] != '':
+                if row['salary.salaries.val.salaryPercentileMap.payPercentile10'] != '':
                     if row['id'] not in self.salaries:
                         self.salaries[row['id']] = [self.get_salaries(row)]
                     else:
@@ -50,7 +49,7 @@ class JobsParser:
     def initialize(self):
         self.read_reviews_from_csv()
         self.read_benefits_from_csv()
-        # self.read_salaries_from_csv()
+        self.read_salaries_from_csv()
 
 
     def add_jobs_to_db(self, url, db_name):
@@ -68,6 +67,10 @@ class JobsParser:
                     pass
                 try:
                     job['reviews'] = self.reviews[row['reviews']]
+                except:
+                    pass
+                try:
+                    job['salaries'] = self.salaries[row['salary.salaries']]
                 except:
                     pass
                 jobs.append(job)
@@ -111,15 +114,21 @@ class JobsParser:
         }
 
     def get_salaries(self, row) -> dict:
-        return {
-            '_id': row['reviews.val.id'],
-            'overallRating': row['reviews.val.reviewRatings.overall'],
-            'compBenefitsRating': row['reviews.val.reviewRatings.compBenefits'],
-            'cultureValuesRating': row['reviews.val.reviewRatings.cultureValues'],
-            'seniorManagmentRating': row['reviews.val.reviewRatings.seniorManagement'],
-            'workLifeBalanceRating': row['reviews.val.reviewRatings.worklifeBalance'],
-            'jobTitle': row['reviews.val.reviewerJobTitle'],
+        d = {
+            'jobTitle': row['salary.salaries.val.jobTitle'],
+            'payCount': row['salary.salaries.val.basePayCount'],
+            'payPercentile10': float(row['salary.salaries.val.salaryPercentileMap.payPercentile10']),
+            'payPercentile90': float(row['salary.salaries.val.salaryPercentileMap.payPercentile90']),
         }
+
+        if (row['salary.salaries.val.payPeriod'] == 'MONTHLY'):
+            d['payPercentile90'] *= 12
+            d['payPercentile10'] *= 12
+        elif (row['salary.salaries.val.payPeriod'] == 'HOURLY'):
+            d['payPercentile90'] *= 2080
+            d['payPercentile10'] *= 2080
+
+        return d
 
 
 if __name__ == '__main__':
