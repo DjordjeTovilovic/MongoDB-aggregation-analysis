@@ -1,4 +1,3 @@
-from dateutil import parser
 import pymongo
 import csv
 
@@ -7,6 +6,8 @@ class JobsParser:
         self._file = file
         self.reviews = {}
         self.benefits = {}
+        self.currencyExchange = {}
+        self.jobCurrency = {}
         self.salaries = {}
         self.initialize()
 
@@ -21,7 +22,6 @@ class JobsParser:
                         self.reviews[row['id']] = [self.get_reviews(row)]
                     else:
                         self.reviews[row['id']].append(self.get_reviews(row))
-    
 
     def read_benefits_from_csv(self):
         file = 'glassdoor/glassdoor_benefits_comments.csv'
@@ -33,6 +33,21 @@ class JobsParser:
                         self.benefits[row['id']] = [self.get_benefits(row)]
                     else:
                         self.benefits[row['id']].append(self.get_benefits(row))
+
+
+    def read_curency_exchange_from_csv(self):
+        with open(self._file, 'r', encoding = 'cp850') as csv_file:
+            reader = csv.DictReader(csv_file)
+            for row in reader:
+                self.jobCurrency[row['salary.salaries']] = row['salary.country.currency.currencyCode']
+
+        file = 'glassdoor/currency_exchange.csv'
+        with open(file, 'r', encoding = 'cp850') as csv_file:
+            reader = csv.DictReader(csv_file)
+            for row in reader:
+                if row['ExchangeRate'] != '':
+                    self.currencyExchange[row['Code']] = float(row['ExchangeRate'])
+
 
     def read_salaries_from_csv(self):
         file = 'glassdoor/glassdoor_salary_salaries.csv'
@@ -49,6 +64,7 @@ class JobsParser:
     def initialize(self):
         self.read_reviews_from_csv()
         self.read_benefits_from_csv()
+        self.read_curency_exchange_from_csv()
         self.read_salaries_from_csv()
 
 
@@ -83,6 +99,7 @@ class JobsParser:
             '_id': row['gaTrackerData.pageRequestGuid.guid'],
             'empId': int(row['gaTrackerData.empId']),
             'empName': row['gaTrackerData.empName'],
+            'empSize': row['gaTrackerData.empSize'],
             'industryId': int(row['gaTrackerData.industryId']),
             'industry': row['gaTrackerData.industry'],
             'jobId': row['gaTrackerData.jobId.long'],
@@ -117,8 +134,8 @@ class JobsParser:
         d = {
             'jobTitle': row['salary.salaries.val.jobTitle'],
             'payCount': row['salary.salaries.val.basePayCount'],
-            'payPercentile10': float(row['salary.salaries.val.salaryPercentileMap.payPercentile10']),
-            'payPercentile90': float(row['salary.salaries.val.salaryPercentileMap.payPercentile90']),
+            'payPercentile10': float(row['salary.salaries.val.salaryPercentileMap.payPercentile10']) * self.currencyExchange[self.jobCurrency[row['id']]],
+            'payPercentile90': float(row['salary.salaries.val.salaryPercentileMap.payPercentile90']) * self.currencyExchange[self.jobCurrency[row['id']]],
         }
 
         if (row['salary.salaries.val.payPeriod'] == 'MONTHLY'):
