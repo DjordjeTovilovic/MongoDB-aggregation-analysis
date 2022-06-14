@@ -123,7 +123,7 @@ class JobsParser:
 
     def get_benefits(self, row) -> dict:
         return {
-            'currentJob': bool(row['benefits.comments.val.currentJob']),
+            'currentJob': row['benefits.comments.val.currentJob'],
             'rating': float(row['benefits.comments.val.rating']),
             'jobTitle': row['benefits.comments.val.jobTitle'],
             'state': row['benefits.comments.val.state'],
