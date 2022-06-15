@@ -113,12 +113,13 @@ class JobsParser:
     def get_reviews(self, row) -> dict:
         return {
             '_id': row['reviews.val.id'],
-            'overallRating': row['reviews.val.reviewRatings.overall'],
-            'compBenefitsRating': row['reviews.val.reviewRatings.compBenefits'],
-            'cultureValuesRating': row['reviews.val.reviewRatings.cultureValues'],
-            'seniorManagmentRating': row['reviews.val.reviewRatings.seniorManagement'],
-            'workLifeBalanceRating': row['reviews.val.reviewRatings.worklifeBalance'],
+            'overallRating': float(row['reviews.val.reviewRatings.overall']),
+            'compBenefitsRating': float(row['reviews.val.reviewRatings.compBenefits']),
+            'cultureValuesRating': float(row['reviews.val.reviewRatings.cultureValues']),
+            'seniorManagmentRating': float(row['reviews.val.reviewRatings.seniorManagement']),
+            'workLifeBalanceRating': float(row['reviews.val.reviewRatings.worklifeBalance']),
             'jobTitle': row['reviews.val.reviewerJobTitle'],
+            'currentJob': row['reviews.val.reviewerInformation'],
         }
 
     def get_benefits(self, row) -> dict:

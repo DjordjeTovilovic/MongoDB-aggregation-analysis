@@ -117,3 +117,33 @@ db.getCollection("glassdoor").aggregate(
   ],
   { allowDiskUse: true }
 );
+
+db.getCollection("glassdoor").aggregate(
+  [
+    { $unwind: "$reviews" },
+    {
+      $group: {
+        _id: "$empName",
+        avgOverallRating: { $avg: "$reviews.overallRating" },
+        avgCompBenefitsRating: { $avg: "$reviews.compBenefitsRating" },
+        avgCultureValuesRating: { $avg: "$reviews.cultureValuesRating" },
+        avgSeniorManagmentRating: { $avg: "$reviews.seniorManagmentRating" },
+        avgWorkLifeBalanceRating: { $avg: "$reviews.workLifeBalanceRating" },
+        reviewsCount: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        avgOverallRating: 1,
+        avgCompBenefitsRating: 1,
+        avgCultureValuesRating: 1,
+        avgSeniorManagmentRating: 1,
+        avgWorkLifeBalanceRating: 1,
+        reviewsCount: 1,
+      },
+    },
+    { $out: { db: "sbp-v2", coll: "reviews" } },
+  ],
+  { allowDiskUse: true }
+);
