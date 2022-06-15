@@ -11,9 +11,19 @@ db.getCollection("glassdoor").aggregate([
   },
   {
     $group: {
-      _id: { Country: "$country", jobTitle: "$salaries.jobTitle" },
-      payPercentile10: { $avg: "$salaries.payPercentile10" },
-      payPercentile90: { $avg: "$salaries.payPercentile90" },
+      _id: { country: "$country", jobTitle: "$salaries.jobTitle" },
+      avgPayPercentile10: { $avg: "$salaries.payPercentile10" },
+      avgPayPercentile90: { $avg: "$salaries.payPercentile90" },
+    },
+  },
+  { $sort: { avgPayPercentile90: -1 } },
+  {
+    $project: {
+      _id: 0,
+      jobTitle: "$_id.jobTitle",
+      coutry: "$_id.country",
+      avgPayPercentile10: 1,
+      avgPayPercentile90: 1,
     },
   },
 ]);
@@ -21,10 +31,9 @@ db.getCollection("glassdoor").aggregate([
 //2. Prosecna ocena benefita ljudi koji su trenutno zaposleni i bivsi radnika
 db.getCollection("glassdoor").aggregate([
   { $unwind: "$benefits" },
-  { $match: { "benefits.city": "London" } },
   {
     $group: {
-      _id: "$benefits.currentJob",
+      _id: { currentJob: "$benefits.currentJob" },
       rating: { $avg: "$benefits.rating" },
     },
   },
@@ -33,21 +42,28 @@ db.getCollection("glassdoor").aggregate([
 //3. 5 Najplacenijih poslova u Velikoj Britaniji
 db.getCollection("glassdoor").aggregate([
   { $unwind: "$salaries" },
-  { $match: { country: { $in: ["United Kingdom"] } } },
-  { $sort: { "salaries.payPercentile90": -1 } },
+  { $match: { country: "United Kingdom" } },
+  {
+    $group: {
+      _id: { country: "$country", jobTitle: "$salaries.jobTitle" },
+      maxPayPercentile90: { $max: "$salaries.payPercentile90" },
+    },
+  },
+  { $sort: { maxPayPercentile90: -1 } },
   { $limit: 5 },
   {
     $project: {
-      jobTitle: "$salaries.jobTitle",
-      payPercentile90: "$salaries.payPercentile90",
+      _id: 0,
+      jobTitle: "$_id.jobTitle",
+      maxPayPercentile90: 1,
     },
   },
 ]);
 
-//4. Prosecna plata u zavisnosti od velicine firme
+//4. Prosecna plata u zavisnosti od velicine firme u Velikoj Britaniji
 db.getCollection("glassdoor").aggregate([
   { $unwind: "$salaries" },
-  { $match: { country: { $in: ["United Kingdom"] } } },
+  { $match: { country: "United Kingdom" } },
   {
     $group: {
       _id: "$empSize",
