@@ -1,3 +1,105 @@
+
+// nista,
+// industry, industryId   ,, suma (numberOfRatings), location
+// empName, empId, empSize,   ,, jobTitle, country, sum ,number of ratings
+// jobTitle,   ,, benefits-comments , count
+// industry, industryId,    ,, jobTitle, avgSalary, 
+
+
+db.getCollection("glassdoor").aggregate(
+  [
+    {
+     $unwind : "$benefits" 
+    },
+    {
+      $group : {
+        _id : {
+          jobTitle : "$jobTitle",
+          comments : "$benefits.comment"
+        },
+        number: {$sum : 1}
+      }
+    },
+    {
+      $project : {
+        _id: {
+          jobTitle : "$_id.jobTitle",
+          comments : "$_id.comments"
+        },
+        number: "$number"
+      }
+    },
+    { $out: { db: "sbp-v2", coll: "benefits_comments" } }
+  ],
+  { allowDiskUse: true }
+)
+
+db.getCollection("glassdoor").aggregate(
+  [
+    {
+      $unwind: "$salaries"  
+    },
+    {
+      $group: {
+        _id: {
+          industry : "$industry",
+          jobTitle: "$jobTitle"
+        },
+        average_salary : {$avg : "$salaries.payPercentile90"}
+      }
+    },
+    {
+      $project : {
+        _id: {
+          industry: "$_id.industry",
+          jobTitle: "$_id.jobTitle",
+        },
+        average_salary: {$round : ["$average_salary" , 2]}
+      }
+    },
+    { $out: { db: "sbp-v2", coll: "salary_per_job" } }
+  ],
+  { allowDiskUse: true }
+)
+
+db.getCollection("glassdoor").aggregate(
+  [
+    {
+      $group: {
+        _id: {
+          jobTitle: "$jobTitle",
+          country: "$country",
+          location: "$location",
+          empName: "$empName",
+          empSize: "$empSize",
+          industry: "$industry",
+          benefitRating: "$benefitRating",
+          numberOfRatings: "$numberOfRating",
+        },
+        number: {$sum : "$nubmerOfRatings"}
+      }
+    },
+    {
+      $project : {
+       _id: {
+          jobTitle: "$_id.jobTitle",
+          country: "$_id.country",
+          location: "$_id.location",
+          empName: "$_id.empName",
+          empSize: "$_id.empSize",
+          industry: "$_id.industry",
+          benefitRating: "$_id.benefitRating",
+          numberOfRatings: "$_id.numberOfRating",
+        },
+        number: "$number"
+      }
+    },
+    { $out: { db: "sbp-v2", coll: "industries" } },
+  ],
+  { allowDiskUse: true }
+)
+
+
 db.getCollection("glassdoor").aggregate(
   [
     {

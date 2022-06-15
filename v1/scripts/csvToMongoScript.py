@@ -128,6 +128,8 @@ class JobsParser:
             'jobTitle': row['benefits.comments.val.jobTitle'],
             'state': row['benefits.comments.val.state'],
             'city': row['benefits.comments.val.city'],
+            'comment' : row['benefits.comments.val.comment']
+        
         }
 
     def get_salaries(self, row) -> dict:
