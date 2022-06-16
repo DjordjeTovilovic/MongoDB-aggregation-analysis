@@ -15,7 +15,9 @@ db.getCollection("glassdoor").aggregate(
       $group : {
         _id : {
           jobTitle : "$jobTitle",
-          comments : "$benefits.comment"
+          comments : "$benefits.comment",
+          location : "$location",
+          benefitRating : "$benefitRating"
         },
         number: {$sum : 1}
       }
@@ -24,7 +26,9 @@ db.getCollection("glassdoor").aggregate(
       $project : {
         _id: {
           jobTitle : "$_id.jobTitle",
-          comments : "$_id.comments"
+          comments : "$_id.comments",
+          location : "$_id.location",
+          benefitRating : "$_id.benefitRating"
         },
         number: "$number"
       }
@@ -58,43 +62,6 @@ db.getCollection("glassdoor").aggregate(
       }
     },
     { $out: { db: "sbp-v2", coll: "salary_per_job" } }
-  ],
-  { allowDiskUse: true }
-)
-
-db.getCollection("glassdoor").aggregate(
-  [
-    {
-      $group: {
-        _id: {
-          jobTitle: "$jobTitle",
-          country: "$country",
-          location: "$location",
-          empName: "$empName",
-          empSize: "$empSize",
-          industry: "$industry",
-          benefitRating: "$benefitRating",
-          numberOfRatings: "$numberOfRating",
-        },
-        number: {$sum : "$nubmerOfRatings"}
-      }
-    },
-    {
-      $project : {
-       _id: {
-          jobTitle: "$_id.jobTitle",
-          country: "$_id.country",
-          location: "$_id.location",
-          empName: "$_id.empName",
-          empSize: "$_id.empSize",
-          industry: "$_id.industry",
-          benefitRating: "$_id.benefitRating",
-          numberOfRatings: "$_id.numberOfRating",
-        },
-        number: "$number"
-      }
-    },
-    { $out: { db: "sbp-v2", coll: "industries" } },
   ],
   { allowDiskUse: true }
 )
@@ -216,36 +183,6 @@ db.getCollection("glassdoor").aggregate(
       },
     },
     { $out: { db: "sbp-v2", coll: "benefits" } },
-  ],
-  { allowDiskUse: true }
-);
-
-db.getCollection("glassdoor").aggregate(
-  [
-    { $unwind: "$reviews" },
-    {
-      $group: {
-        _id: "$empName",
-        avgOverallRating: { $avg: "$reviews.overallRating" },
-        avgCompBenefitsRating: { $avg: "$reviews.compBenefitsRating" },
-        avgCultureValuesRating: { $avg: "$reviews.cultureValuesRating" },
-        avgSeniorManagmentRating: { $avg: "$reviews.seniorManagmentRating" },
-        avgWorkLifeBalanceRating: { $avg: "$reviews.workLifeBalanceRating" },
-        reviewsCount: { $sum: 1 },
-      },
-    },
-    {
-      $project: {
-        _id: 1,
-        avgOverallRating: 1,
-        avgCompBenefitsRating: 1,
-        avgCultureValuesRating: 1,
-        avgSeniorManagmentRating: 1,
-        avgWorkLifeBalanceRating: 1,
-        reviewsCount: 1,
-      },
-    },
-    { $out: { db: "sbp-v2", coll: "reviews" } },
   ],
   { allowDiskUse: true }
 );
