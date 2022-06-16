@@ -1,6 +1,6 @@
 // Koja je prosecna ocena benefita u Londonu koji u svojim uslugama imaju benefit "rad od kuce"?
 db.glassdoor.aggregate([
-    {$match: {$and: [{"location" : "London"},{"benefits.comment" : {$regex : "work from home"}} ,{"benefits.comment" : {$regex : "Work from home"}}  ]}},
+    {$match: {$and: [{"location" : "London"}, {$or : [{"benefits.comment" : {$regex : "work from home"}} ,{"benefits.comment" : {$regex : "Work from home"}}]}  ]}},
     {$group: {"_id" : null,"average_benefit_rating" : {$avg : "$benefitRating"}}},
     {$project: {_id: "Average benefit rating" ,average_rating: {$round: ["$average_benefit_rating", 2]}}}
 ])
