@@ -1,72 +1,3 @@
-
-// nista,
-// industry, industryId   ,, suma (numberOfRatings), location
-// empName, empId, empSize,   ,, jobTitle, country, sum ,number of ratings
-// jobTitle,   ,, benefits-comments , count
-// industry, industryId,    ,, jobTitle, avgSalary, 
-
-
-db.getCollection("glassdoor").aggregate(
-  [
-    {
-     $unwind : "$benefits" 
-    },
-    {
-      $group : {
-        _id : {
-          jobTitle : "$jobTitle",
-          comments : "$benefits.comment",
-          location : "$location",
-          benefitRating : "$benefitRating"
-        },
-        number: {$sum : 1}
-      }
-    },
-    {
-      $project : {
-        _id: {
-          jobTitle : "$_id.jobTitle",
-          comments : "$_id.comments",
-          location : "$_id.location",
-          benefitRating : "$_id.benefitRating"
-        },
-        number: "$number"
-      }
-    },
-    { $out: { db: "sbp-v2", coll: "benefits_comments" } }
-  ],
-  { allowDiskUse: true }
-)
-
-db.getCollection("glassdoor").aggregate(
-  [
-    {
-      $unwind: "$salaries"  
-    },
-    {
-      $group: {
-        _id: {
-          industry : "$industry",
-          jobTitle: "$jobTitle"
-        },
-        average_salary : {$avg : "$salaries.payPercentile90"}
-      }
-    },
-    {
-      $project : {
-        _id: {
-          industry: "$_id.industry",
-          jobTitle: "$_id.jobTitle",
-        },
-        average_salary: {$round : ["$average_salary" , 2]}
-      }
-    },
-    { $out: { db: "sbp-v2", coll: "salary_per_job" } }
-  ],
-  { allowDiskUse: true }
-)
-
-
 db.getCollection("glassdoor").aggregate(
   [
     {
@@ -149,40 +80,90 @@ db.getCollection("glassdoor").aggregate(
 
 db.getCollection("glassdoor").aggregate(
   [
-    { $unwind: "$benefits" },
+    {
+      $unwind: "$benefits",
+    },
     {
       $group: {
         _id: {
-          jobTitle: "$benefits.jobTitle",
-          state: "$benefits.state",
-          city: "$benefits.city",
-          rating: "$benefits.rating",
-          currentJob: "$benefits.currentJob",
+          jobTitle: "$jobTitle",
+          comments: "$benefits.comment",
+          location: "$location",
+          benefitRating: "$benefitRating",
         },
-        jobDetails: {
-          $push: {
-            empName: "$empName",
-            empSize: "$empSize",
-            industry: "$industry",
-            benefitRating: "$benefitRating",
-            numberOfRatings: "$numberOfRating",
-          },
-        },
+        number: { $sum: 1 },
       },
     },
     {
       $project: {
         _id: {
           jobTitle: "$_id.jobTitle",
-          state: "$_id.state",
-          city: "$_id.city",
-          rating: "$_id.rating",
-          currentJob: "$_id.currentJob",
+          comments: "$_id.comments",
+          location: "$_id.location",
+          benefitRating: "$_id.benefitRating",
         },
-        jobDetails: 1,
+        number: "$number",
       },
     },
     { $out: { db: "sbp-v2", coll: "benefits" } },
+  ],
+  { allowDiskUse: true }
+);
+
+db.getCollection("glassdoor").aggregate(
+  [
+    { $unwind: "$reviews" },
+    {
+      $group: {
+        _id: "$empName",
+        avgOverallRating: { $avg: "$reviews.overallRating" },
+        avgCompBenefitsRating: { $avg: "$reviews.compBenefitsRating" },
+        avgCultureValuesRating: { $avg: "$reviews.cultureValuesRating" },
+        avgSeniorManagmentRating: { $avg: "$reviews.seniorManagmentRating" },
+        avgWorkLifeBalanceRating: { $avg: "$reviews.workLifeBalanceRating" },
+        reviewsCount: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        avgOverallRating: 1,
+        avgCompBenefitsRating: 1,
+        avgCultureValuesRating: 1,
+        avgSeniorManagmentRating: 1,
+        avgWorkLifeBalanceRating: 1,
+        reviewsCount: 1,
+      },
+    },
+    { $out: { db: "sbp-v2", coll: "reviews" } },
+  ],
+  { allowDiskUse: true }
+);
+
+db.getCollection("glassdoor").aggregate(
+  [
+    {
+      $unwind: "$salaries",
+    },
+    {
+      $group: {
+        _id: {
+          industry: "$industry",
+          jobTitle: "$jobTitle",
+        },
+        average_salary: { $avg: "$salaries.payPercentile90" },
+      },
+    },
+    {
+      $project: {
+        _id: {
+          industry: "$_id.industry",
+          jobTitle: "$_id.jobTitle",
+        },
+        average_salary: { $round: ["$average_salary", 2] },
+      },
+    },
+    { $out: { db: "sbp-v2", coll: "salary_per_job" } },
   ],
   { allowDiskUse: true }
 );

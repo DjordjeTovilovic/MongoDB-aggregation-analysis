@@ -1,6 +1,10 @@
-//1. 10 gradova sa najvise oglasa za posao
+//1. 10 gradova sa najvise oglasa za posao u Francuskoj
 db.getCollection("jobs").aggregate([
-  { $match: { "_id.location": { $ne: "" } } },
+  {
+    $match: {
+      $and: [{ "_id.country": "France", "_id.location": { $ne: "" } }],
+    },
+  },
   {
     $group: {
       _id: "$_id.location",

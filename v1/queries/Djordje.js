@@ -1,6 +1,6 @@
-//1. 10 gradova sa najvise oglasa za posao
+//1. 10 gradova sa najvise oglasa za posao u Francuskoj
 db.getCollection("glassdoor").aggregate([
-  { $match: { location: { $ne: "" } } },
+  { $match: { $and: [{ country: "France", location: { $ne: "" } }] } },
   { $group: { _id: "$location", jobListingCount: { $sum: 1 } } },
   { $sort: { jobListingCount: -1 } },
   { $limit: 10 },
